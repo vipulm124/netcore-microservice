@@ -1,25 +1,27 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
+# Use the official .NET 8 SDK image for building the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Wpm.Management.Api/Wpm.Management.Api.csproj", "Wpm.Management.Api/"]
-RUN dotnet restore "./Wpm.Management.Api/Wpm.Management.Api.csproj"
-COPY . .
-WORKDIR "/src/Wpm.Management.Api"
-RUN dotnet build "./Wpm.Management.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Wpm.Management.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Wpm.Management.Api.dll"]
+
+# Copy everything from the current directory to the working directory in the container
+COPY . .
+
+# Restore dependencies (use .csproj to minimize unnecessary restores)
+RUN dotnet restore
+
+# Build the project
+RUN dotnet publish -c Release -o out
+
+# Use a runtime image to run the published app
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+# Copy the published output from the build image
+COPY --from=build /app/out .
+
+EXPOSE 8080
+
+# Set the entry point for the container to run the app
+# ENTRYPOINT ["dotnet", "TestApiDocker.dll"]
+CMD ["dotnet", "Wpm.Management.Api.dll"]
