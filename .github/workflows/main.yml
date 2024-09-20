@@ -33,7 +33,7 @@ jobs:
             docker push ${{ secrets.ACR_LOGIN_SERVER }}/wpm-management-api:${{ env.DATE_TIME }}.${{ github.run_number }}
 
        - name: 'Build and push Clinic container image'
-          run: |
+         run: |
             docker build src -f src/Wpm.Clinic/Dockerfile -t ${{ secrets.ACR_LOGIN_SERVER }}/wpm-clinic-api:${{ env.DATE_TIME }}.${{ github.run_number }}
             docker push ${{ secrets.ACR_LOGIN_SERVER }}/wpm-clinic-api:${{ env.DATE_TIME }}.${{ github.run_number }}
 
